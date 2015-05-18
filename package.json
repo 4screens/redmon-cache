@@ -1,0 +1,21 @@
+{
+  "name": "redmon-cache",
+  "version": "0.0.1",
+  "description": "Tiny node.js module for caching MongoDB objects using Redis.",
+  "main": "index.js",
+  "repository": "https://github.com/4screens/remdmon-cache.git",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "cache",
+    "redis",
+    "mongodb"
+  ],
+  "author": "Tomasz Marciszewski",
+  "license": "ISC",
+  "dependencies": {
+    "debug": "^2.2.0",
+    "ioredis": "^1.2.7"
+  }
+}
