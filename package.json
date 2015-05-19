@@ -1,7 +1,7 @@
 {
   "name": "redmon-cache",
   "version": "0.0.2",
-  "description": "Tiny node.js module for caching MongoDB objects using Redis.",
+  "description": "Tiny node.js module for caching objects using Redis.",
   "main": "index.js",
   "repository": {
     "type": "git",
