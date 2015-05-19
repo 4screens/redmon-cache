@@ -81,12 +81,12 @@ All methods are returning promisses. Resolved promise means that all operations 
 ## Options
 | Name          | Default     | Default     |
 | :------------- | :----------- | :----------- |
-| defaultTTL |   60s   | default time to live of object in cache. |
-| redisClient |   internal   | client for connecting to redis (ioredis) |
-| redisPrefix |  none    | custom prefix for cache keys |
-| redisPort |   6379   | redis port for internal redis client connection (used if redisClient option is not set) |
-| redisHost |   localhost   | redis host for internal redis client connection (used if redisClient option is not set) |
-| log |   debug   | External logger. Must support debug and error methods |
+| defaultTTL  | 60s       | default time to live of object in cache. |
+| redisClient | internal  | client for connecting to redis (ioredis) |
+| redisPrefix | none      | custom prefix for cache keys |
+| redisPort   | 6379      | redis port for internal redis client connection (used if redisClient option is not set) |
+| redisHost   | localhost | redis host for internal redis client connection (used if redisClient option is not set) |
+| log         |   debug   | External logger. Must support debug and error methods |
 
 ## Authors
 
