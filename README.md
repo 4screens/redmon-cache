@@ -19,7 +19,7 @@ Plain object example _app.js_:
 ```js
 var cache = require('redmon-cache')();
 
-cache.set('my-data, { status: 'ok', iAm: 'Batman' }, 15)
+cache.set('my-data', { status: 'ok', iAm: 'Batman' }, 15)
   .then(function(data) {
     console.log('Data cached');
     
