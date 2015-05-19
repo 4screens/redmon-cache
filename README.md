@@ -1,6 +1,6 @@
 # redmon-cache
 
-  tiny node.js module for caching MongoDB objects using Redis.
+  tiny node.js module for caching objects using Redis.
 
 ## Installation
 
@@ -9,18 +9,34 @@ $ npm install redmon-cache
 ```
 
 ##Purpose
-With `redmon-cache` it's easy to cache documents retrieved from MongoDB. This module is made specifically to one purpose - to cache documents that are used very often in your application. If document is retrieved from database very often and is not changing too much it's best not to get it from DB every time (it has better things to do).
+`redmon-cache` was created to easily cache objects in distributed environment (like micro-service application). I'm using it mostly to cache documents retrieved from MongoDB that are not changing too often but it's very important to be able to invalidate cache across all applications/services at once.
 
-It was designed to work in micro-service environment where it is important to share cached data and be able to invalidate cache globally.
+This module is work in progress.
+
 ## Usage
+Plain object example _app.js_:
 
-Example _app.js_:
+```js
+var cache = require('redmon-cache')();
+
+cache.set('my-data, { status: 'ok', iAm: 'Batman' }, 15)
+  .then(function(data) {
+    console.log('Data cached');
+    
+    cache.get('my-data')
+        .then(function(cached) {
+            console.log('Data from cache', cached);
+        });
+  });
+```
+
+Mongoose example _app.js_:
 
 ```js
 var someMongooseModel = require('./userModel');
 var cache = require('redmon-cache')();
 
-cache.get(someMongooseModel, '5475c628d4a04400009a2596', 10)
+cache.mongoGet(someMongooseModel, '5475c628d4a04400009a2596', 10)
   .then(function(data) {
     console.log('data', data);
   })
@@ -29,7 +45,7 @@ cache.get(someMongooseModel, '5475c628d4a04400009a2596', 10)
   });
 ```
 
-Advanced example _app.js_:
+Advanced Mongoose example _app.js_:
 
 ```js
 var redis = require("redis"),
@@ -41,7 +57,7 @@ var cache = require('redmon-cache')({
     defaultTTL: 30
 });
 
-cache.get(someMongooseModel, '5475c628d4a04400009a2596', 10)
+cache.mongoGet(someMongooseModel, '5475c628d4a04400009a2596', 10)
   .then(function(data) {
     console.log('data', data);
   })
@@ -51,12 +67,16 @@ cache.get(someMongooseModel, '5475c628d4a04400009a2596', 10)
 ```
 
 ##API
-There are only two methods exposed
-- **get(mongooseModel, id, ttl)** - gets cached document. If it's not in cache it gets it from database and caches it.
+
+All methods are returning promisses. Resolved promise means that all operations are finished.
+
+- **get(key)** - gets cached object. If there is nothing under this key it will return _null_
+- **set(key, data, ttl)** - caches data under key
+- **del(mongooseModel, id)** - deletes document from cache
+- **mongoGet(mongooseModel, id, ttl)** - gets cached document. If it's not in cache it gets it from database and caches it.
    - mongooseModel - model of collection from whitch the object will be retreived
    - id - _id of object that will be retreived. This can be ObjectId or String
    - ttl - time (in seconds) after witch object will be dropped from cache
-- **delete(mongooseModel, id)** - deletes document from cache
 
 ## Options
 | Name          | Default     | Default     |
@@ -76,7 +96,7 @@ There are only two methods exposed
 
 (The ISC License)
 
-Copyright (c) 2014 Tomasz Marciszewski;
+Copyright (c) 2014 Tomasz Marciszewski
 
 Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
 

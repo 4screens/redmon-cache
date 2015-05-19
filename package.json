@@ -3,7 +3,10 @@
   "version": "0.0.1",
   "description": "Tiny node.js module for caching MongoDB objects using Redis.",
   "main": "index.js",
-  "repository": "https://github.com/4screens/remdmon-cache.git",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/4screens/remdmon-cache.git"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
