@@ -19,15 +19,19 @@ module.exports = function(options) {
   
   var log = {
     debug: function() {
-      debug.apply(this, arguments);
-      if(externalLogger) {
-        externalLogger.debug.apply(this, arguments);
+      if(externalLogger && externalLogger.debug) {
+        externalLogger.debug.apply(externalLogger, arguments);
+      }
+      else {
+        debug.apply(debug, arguments);
       }
     },
     error: function() {
-      debug.apply(this, arguments);
-      if(externalLogger) {
+      if(externalLogger && externalLogger.error) {
         externalLogger.error.apply(this, arguments);
+      }
+      else {
+        debug.apply(debug, arguments);
       }
     }
   };
@@ -36,8 +40,8 @@ module.exports = function(options) {
     options = {};
   }
 
-  if (options.prefix){
-    prefix = options.prefix + prefix;
+  if (options.redisPrefix){
+    prefix = options.redisPrefix + prefix;
     log.debug('Setting redis prefix to ' + prefix);
   }
 
@@ -54,19 +58,38 @@ module.exports = function(options) {
   var redisClient =
     options.redisClient ? options.redisClient : new Redis(options.redisPort, options.redisHost);
 
-  function getKey(DatabaseModel, id) {
+  function getKey(key) {
+    return prefix + key;
+  }
+  function getMongoKey(DatabaseModel, id) {
     var key = prefix + DatabaseModel.modelName + ':' + id;
     log.debug('Redis key:', key);
     return key;
   }
 
+  function setInRedis(key, data, ttl) {
+    return redisClient.set(key, JSON.stringify(data), 'EX', ttl || defaultTTL);
+  }
+  function getFromRedis(key) {
+    log.debug('Getting ' + key + ' from redis');
+    return redisClient.get(key)
+      .then(function(data) {
+        if(data) {
+          log.debug('Got data from redis');
+        }
+        else {
+          log.debug('No data for ' + key + ' in redis');
+        }
+        return JSON.parse(data);
+      });
+  }
   function getFromDB(DatabaseModel, id, ttl)
   {
     return q(DatabaseModel.findOne({ _id: id }).exec())
       .then(function(data) {
         if(data) {
           log.debug('Got data from database. Saving in redis. TTL: ' + (ttl || defaultTTL));
-           redisClient.set(getKey(DatabaseModel, id), JSON.stringify(data), 'EX', ttl || defaultTTL, 'NX')
+          setInRedis(getMongoKey(DatabaseModel, id), data, ttl)
             .catch(function(err) {
               log.error('error while saving to redis', err);
             });
@@ -76,9 +99,18 @@ module.exports = function(options) {
       });
   }
   return {
-    get: function(DatabaseModel, id, ttl) {
+    set: function(key, data, ttl){
+      return setInRedis(getKey(key), data, ttl);
+    },
+    get: function(key) {
+      return getFromRedis(getKey(key));
+    },
+    mongoGet: function(DatabaseModel, id, ttl) {
+      if(typeof id === 'string') {
+        id = id.toString();
+      }
       var defered = q.defer();
-      redisClient.get(getKey(DatabaseModel, id))
+      getFromRedis(getMongoKey(DatabaseModel, id))
         .then(function(redisData){
           if(!redisData) {
             log.debug('No data in redis for selected key. Attempting to get data from DB');
@@ -94,7 +126,7 @@ module.exports = function(options) {
           }
           else {
             log.debug('Returning data from redis cache');
-            var result = new DatabaseModel(JSON.parse(redisData));
+            var result = new DatabaseModel(redisData);
             defered.resolve(result);
           }
         })
@@ -114,8 +146,11 @@ module.exports = function(options) {
 
       return defered.promise;
     },
-    delete: function(DatabaseModel, id) {
-      return redisClient.del(getKey(DatabaseModel, id));
+    del: function(DatabaseModel, id) {
+      if(typeof id === 'string') {
+        id = id.toString();
+      }
+      return redisClient.del(getMongoKey(DatabaseModel, id));
     }
   };
 
