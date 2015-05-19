@@ -5,7 +5,7 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/4screens/remdmon-cache.git"
+    "url": "git://github.com/4screens/redmon-cache.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
