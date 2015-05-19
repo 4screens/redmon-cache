@@ -19,15 +19,19 @@ module.exports = function(options) {
   
   var log = {
     debug: function() {
-      debug.apply(this, arguments);
-      if(externalLogger) {
-        externalLogger.debug.apply(this, arguments);
+      if(externalLogger && externalLogger.debug) {
+        externalLogger.debug.apply(externalLogger, arguments);
+      }
+      else {
+        debug.apply(debug, arguments);
       }
     },
     error: function() {
-      debug.apply(this, arguments);
-      if(externalLogger) {
+      if(externalLogger && externalLogger.error) {
         externalLogger.error.apply(this, arguments);
+      }
+      else {
+        debug.apply(debug, arguments);
       }
     }
   };
