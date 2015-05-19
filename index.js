@@ -36,8 +36,8 @@ module.exports = function(options) {
     options = {};
   }
 
-  if (options.prefix){
-    prefix = options.prefix + prefix;
+  if (options.redisPrefix){
+    prefix = options.redisPrefix + prefix;
     log.debug('Setting redis prefix to ' + prefix);
   }
 
