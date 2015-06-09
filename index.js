@@ -42,12 +42,12 @@ module.exports = function(options) {
 
   if (options.redisPrefix){
     prefix = options.redisPrefix + prefix;
-    log.debug('Setting redis prefix to ' + prefix);
+    log.silly('Setting redis prefix to ' + prefix);
   }
 
   if(options.defaultTTL) {
     defaultTTL = options.defaultTTL;
-    log.debug('Setting default TTL to ' + defaultTTL + ' seconds');
+    log.silly('Setting default TTL to ' + defaultTTL + ' seconds');
   }
 
   if(options.log){
@@ -63,7 +63,6 @@ module.exports = function(options) {
   }
   function getMongoKey(DatabaseModel, id) {
     var key = prefix + DatabaseModel.modelName + ':' + id;
-    log.debug('Redis key:', key);
     return key;
   }
 
@@ -71,13 +70,11 @@ module.exports = function(options) {
     return redisClient.set(key, JSON.stringify(data), 'EX', ttl || defaultTTL);
   }
   function getFromRedis(key) {
-    log.debug('Getting ' + key + ' from redis');
     return redisClient.get(key)
       .then(function(data) {
         if(data) {
-          log.debug('Got data from redis');
-        }
-        else {
+          log.silly('Got data for ' + key + ' from redis');
+        } else {
           log.debug('No data for ' + key + ' in redis');
         }
         return JSON.parse(data);
@@ -125,14 +122,13 @@ module.exports = function(options) {
               });
           }
           else {
-            log.debug('Returning data from redis cache');
+            log.silly('Returning data from redis cache');
             var result = new DatabaseModel(redisData);
             defered.resolve(result);
           }
         })
         .catch(function(err) {
           log.error('Failed to get data from redis because of error', err);
-          log.debug('Attempting to get data from database');
           getFromDB(DatabaseModel, id, ttl)
             .then(function(dbData) {
               log.debug('Returning data from database');
