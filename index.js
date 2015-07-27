@@ -42,12 +42,12 @@ module.exports = function(options) {
 
   if (options.redisPrefix){
     prefix = options.redisPrefix + prefix;
-    log.silly('Setting redis prefix to ' + prefix);
+    log.debug('Setting redis prefix to ' + prefix);
   }
 
   if(options.defaultTTL) {
     defaultTTL = options.defaultTTL;
-    log.silly('Setting default TTL to ' + defaultTTL + ' seconds');
+    log.debug('Setting default TTL to ' + defaultTTL + ' seconds');
   }
 
   if(options.log){
@@ -73,7 +73,7 @@ module.exports = function(options) {
     return redisClient.get(key)
       .then(function(data) {
         if(data) {
-          log.silly('Got data for ' + key + ' from redis');
+          log.debug('Got data for ' + key + ' from redis');
         } else {
           log.debug('No data for ' + key + ' in redis');
         }
@@ -122,8 +122,10 @@ module.exports = function(options) {
               });
           }
           else {
-            log.silly('Returning data from redis cache');
-            var result = new DatabaseModel(redisData);
+            log.debug('Returning data from redis cache');
+            var result = new DatabaseModel(redisData, Object.keys(redisData), true);
+            result.init(redisData);
+
             defered.resolve(result);
           }
         })

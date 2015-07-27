@@ -1,6 +1,6 @@
 {
   "name": "redmon-cache",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Tiny node.js module for caching objects using Redis.",
   "main": "index.js",
   "repository": {
@@ -19,6 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "debug": "^2.2.0",
-    "ioredis": "^1.2.7"
+    "ioredis": "^1.2.7",
+    "q": "^2.0.3"
   }
 }
