@@ -126,7 +126,8 @@ module.exports = function(options) {
           }
           else {
             log.debug('Returning data from redis cache');
-            var result = new DatabaseModel(redisData);
+            var result = new DatabaseModel(redisData, Object.keys(redisData), true);
+            result.init(redisData);
             defered.resolve(result);
           }
         })
