@@ -2,7 +2,6 @@ module.exports = function(options) {
   'use strict';
   var Redis = require('ioredis'),
     q = require('q'),
-   
     debug = require('debug')('redmon-cache'),
     prefix = 'redmon-cache:',
     defaultTTL = 60; //1 minute
@@ -67,22 +66,59 @@ module.exports = function(options) {
   }
 
   function setInRedis(key, data, ttl) {
-    return redisClient.set(key, JSON.stringify(data), 'EX', ttl || defaultTTL);
+    return redisClient.set(key, JSON.stringify(data), 'EX', ttl || defaultTTL)
+      .finally(function() {
+        if(dbQueries[key]) {
+          delete(dbQueries[key]);
+        }
+      });
   }
-  function getFromRedis(key) {
-    return redisClient.get(key)
+
+  var dbQueries = {};
+  var redisQueries = {};
+
+  function getFromRedis(key, DatabaseModel) {
+
+    if(redisQueries[key]) {
+      return redisQueries[key];
+    }
+    
+    redisQueries[key] = redisClient.get(key)
       .then(function(data) {
         if(data) {
           log.debug('Got data for ' + key + ' from redis');
         } else {
           log.debug('No data for ' + key + ' in redis');
         }
-        return JSON.parse(data);
+        
+        data = JSON.parse(data);
+        if(DatabaseModel && data) {
+          var result = new DatabaseModel(data, Object.keys(data), true);
+          result.init(data);
+          return result;
+        } else {
+          return data;
+        }
+      })
+      .then(function(data) {
+        if(redisQueries[key]) {
+          delete(redisQueries[key]);
+        }
+
+        return data;
       });
+
+    return redisQueries[key];
   }
+
   function getFromDB(DatabaseModel, id, ttl)
   {
-    return q(DatabaseModel.findOne({ _id: id }).exec())
+    var cacheKey = getMongoKey(DatabaseModel, id);
+    if(!!dbQueries[cacheKey]) {
+      return dbQueries[cacheKey];
+    }
+
+    dbQueries[cacheKey] = q(DatabaseModel.findOne({ _id: id }).exec())
       .then(function(data) {
         if(data) {
           log.debug('Got data from database. Saving in redis. TTL: ' + (ttl || defaultTTL));
@@ -94,6 +130,8 @@ module.exports = function(options) {
         
         return data;
       });
+
+    return dbQueries[cacheKey];
   }
   return {
     set: function(key, data, ttl){
@@ -107,7 +145,7 @@ module.exports = function(options) {
         id = id.toString();
       }
       var defered = q.defer();
-      getFromRedis(getMongoKey(DatabaseModel, id))
+      getFromRedis(getMongoKey(DatabaseModel, id), DatabaseModel)
         .then(function(redisData){
           if(!redisData) {
             log.debug('No data in redis for selected key. Attempting to get data from DB');
@@ -123,14 +161,12 @@ module.exports = function(options) {
           }
           else {
             log.debug('Returning data from redis cache');
-            var result = new DatabaseModel(redisData, Object.keys(redisData), true);
-            result.init(redisData);
-
-            defered.resolve(result);
+            defered.resolve(redisData);
           }
         })
         .catch(function(err) {
-          log.error('Failed to get data from redis because of error', err);
+          log.error('Failed to get data from redis because of error', 'aaa', err);
+
           getFromDB(DatabaseModel, id, ttl)
             .then(function(dbData) {
               log.debug('Returning data from database');
